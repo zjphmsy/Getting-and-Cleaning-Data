@@ -28,6 +28,7 @@ ActivityTrain
 ActivityTest
 DataTrain
 DataTest
+
 Step 1. Merges the training and the test sets to create one data set.
 
 Merge Activity and Subject files by row binding and rename variables. Merge Data Training and Test files. Rename variables. Rename columns for Activity. Merge columns : created DataTable with cbind.
