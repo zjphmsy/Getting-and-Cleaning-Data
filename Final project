@@ -1,0 +1,51 @@
+library(data.table)
+library(dplyr)
+
+#reading data
+activity_test <- read.table(file.path(getwd(), "UCI HAR Dataset/test/activity_test.txt"), header = FALSE)
+activity_train <- read.table(file.path(getwd(), "UCI HAR Dataset/train/activity_train.txt"), header = FALSE)
+features_test <- read.table(file.path(getwd(), "UCI HAR Dataset/test/features_test.txt"), header = FALSE)
+features_train <- read.table(file.path(getwd(), "UCI HAR Dataset/train/features_train.txt"), header = FALSE)
+subject_test <- read.table(file.path(getwd(), "UCI HAR Dataset/test/subject_test.txt"), header = FALSE)
+subject_train <- read.table(file.path(getwd(), "UCI HAR Dataset/train/subject_train.txt"), header = FALSE)
+featureNames <- read.table(file.path(getwd(), "UCI HAR Dataset/features.txt"), header = FALSE)
+
+#Q1 merging data
+activity_data <- rbind(activity_test, activity_train)
+features_data <- rbind(features_test, features_train)
+subject_data <- rbind(subject_test, subject_train)
+colnames(features_data) <- t(featureNames[2])
+colnames(activity_data) <- "Activity"
+colnames(subject_data) <- "Subject"
+data <- cbind(features_data, subject_data, activity_data)
+
+#Q2 extract mean and standard deviation
+mean_and_sd <- grep(".*mean.*|.*std.*", names(data), ignore.case = TRUE)
+requiredcoloums <- c(mean_and_sd, 562, 563)
+dim(requiredcoloums)
+extracted_data <- data[,requiredcoloums]
+dim(extracted_data)
+
+#Q3 getting names
+activityLabels <- read.table(file.path(getwd(),"UCI HAR Dataset/activity_labels.txt"), header = FALSE)
+extracted_data$Activity <- as.character(extracted_data$Activity)
+for (i in 1:6){
+  extracted_data$Activity[extracted_data$Activity == i] <- as.character(activityLabels[i,2])
+}
+extracted_data$Activity <- as.factor(extracted_data$Activity)
+
+#Q4 label replace
+names(extracted_data) <- gsub("^t","time", names(extracted_data))
+names(extracted_data) <- gsub("^f", "frequency", names(extracted_data))
+names(extracted_data) <- gsub("Acc", "Accelerometer", names(extracted_data))
+names(extracted_data) <- gsub("Gyro", "Gyroscope", names(extracted_data))
+names(extracted_data) <- gsub("Mag", "Magnitude", names(extracted_data))
+names(extracted_data) <- gsub("BodyBody", "Body", names(extracted_data))
+names(extracted_data)
+
+#Q5 average variable for each activity and each subject
+extracted_data$Subjectime <- as.factor(extracted_data$Subject)
+extracted_data <- data.table(extracted_data)
+tidydata <- aggregate(.~Subject + Activity, extracted_data, mean)
+tidydata <- tidydata[order(tidydata$Subject, tidydata$Activity),]
+write.table(tidydata, file = "tidydata.txt", row.names = FALSE)
